@@ -23,8 +23,8 @@ export const createCustomerSchema = z.object({
       "cancel",
     ])
     .default("pengecekan"),
-  tgl_masuk: z.string().optional(),
-  tgl_keluar: z.string().optional(),
+  tgl_masuk: z.coerce.date().optional(),
+  tgl_keluar: z.coerce.date().optional(),
   catatan: z.string().optional(),
 });
 

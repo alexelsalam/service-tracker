@@ -18,12 +18,24 @@ type Customer = {
   tgl_keluar: Date;
   catatan: string;
 };
+// Helper function untuk format tanggal (ambil hanya YYYY-MM-DD)
+function formatDateOnly(date: Date | string | null): string | null {
+  if (!date) return null;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return (dateObj.toISOString().split("T")[0] as string) || null; // Ambil hanya YYYY-MM-DD
+}
 
 // Ambil semua customer
 export async function getAllCustomers() {
-  return await sql<Customer[]>`
+  const customers = await sql<Customer[]>`
     SELECT * FROM customers ORDER BY created_at DESC
   `;
+
+  return customers.map((c) => ({
+    ...c,
+    tgl_masuk: formatDateOnly(c.tgl_masuk),
+    tgl_keluar: formatDateOnly(c.tgl_keluar),
+  }));
 }
 
 // Ambil customer by ID
@@ -38,6 +50,7 @@ export async function getCustomerById(id: string) {
 
 // Buat customer baru
 export async function createCustomer(input: CreateCustomerInput) {
+  console.log("Input createCustomer:", input);
   const [customer] = await sql<Customer[]>`
     INSERT INTO customers (kode_data,nama_konter,nama_customer,alamat,no_hp,merk_hp,kerusakan,biaya,teknisi,status,tgl_masuk,tgl_keluar,catatan)
     VALUES (${input.kode_data}, ${input.nama_konter}, ${input.nama_customer}, ${input.alamat ?? null}, ${input.no_hp}, ${input.merk_hp ?? null}, ${input.kerusakan ?? null}, ${input.biaya ?? null}, ${input.teknisi}, ${input.status}, ${input.tgl_masuk ?? null}, ${input.tgl_keluar ?? null}, ${input.catatan ?? null})

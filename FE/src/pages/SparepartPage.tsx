@@ -1,33 +1,30 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Sparepart, SparepartFormData } from '@/types';
-import { sparepartApi } from '@/services/api';
-import { formatCurrency } from '@/utils/dummy-data';
-import { useDebounce } from '@/hooks/useDebounce';
-import { useForm } from '@/hooks/useForm';
-import { DataTable } from '@/components/DataTable';
-import { SearchInput } from '@/components/SearchInput';
-import { ReusableModal } from '@/components/ReusableModal';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Loader2, Package } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Sparepart, SparepartFormData } from "@/types";
+import { sparepartApi } from "@/services/api";
+import { useDebounce } from "@/hooks/useDebounce";
+import { DataTable } from "@/components/DataTable";
+import { SearchInput } from "@/components/SearchInput";
+import { ReusableModal } from "@/components/ReusableModal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Pencil, Trash2, Loader2, Package } from "lucide-react";
+import { toast } from "sonner";
+import z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
-const emptySparepart: SparepartFormData = { nama: '', harga: 0, stok: 0 };
-
-function validateSparepart(v: SparepartFormData) {
-  const e: Record<string, string> = {};
-  if (!v.nama.trim()) e.nama = 'Nama sparepart wajib diisi';
-  if (v.harga <= 0) e.harga = 'Harga harus lebih dari 0';
-  if (v.stok < 0) e.stok = 'Stok tidak boleh negatif';
-  return e;
-}
+const createSparePartSchema = z.object({
+  nama: z.string().min(2, "Nama minimal 2 karakter"),
+  stock: z.number().int().min(0, "Stock tidak boleh negatif"),
+});
+type CreateSparePartInput = z.infer<typeof createSparePartSchema>;
 
 export default function SparepartPage() {
   const [spareparts, setSpareparts] = useState<Sparepart[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -43,51 +40,100 @@ export default function SparepartPage() {
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const form = useForm<SparepartFormData>({
-    initialValues: emptySparepart,
-    validate: validateSparepart,
-    onSubmit: async (values) => {
-      if (editingId) {
-        await sparepartApi.update(editingId, values);
-        toast.success('Sparepart berhasil diupdate');
-      } else {
-        await sparepartApi.create(values);
-        toast.success('Sparepart berhasil ditambahkan');
-      }
-      setModalOpen(false);
-      setEditingId(null);
-      form.reset();
-      loadData();
-    },
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<CreateSparePartInput>({
+    resolver: zodResolver(createSparePartSchema),
+    defaultValues: { nama: "", stock: 0 },
   });
 
-  const openCreate = () => { form.reset(); setEditingId(null); setModalOpen(true); };
-  const openEdit = (s: Sparepart) => {
-    setEditingId(s.id);
-    form.reset({ nama: s.nama, harga: s.harga, stok: s.stok });
+  const openCreate = () => {
+    setEditingId(null);
+    reset({ nama: "", stock: 0 });
     setModalOpen(true);
   };
+
+  const openEdit = (sparepart: Sparepart) => {
+    setEditingId(sparepart.id);
+    reset({ nama: sparepart.nama, stock: sparepart.stock });
+    setModalOpen(true);
+  };
+
+  const onSubmit = async (data: CreateSparePartInput) => {
+    const payload: SparepartFormData = {
+      nama: data.nama,
+      stock: data.stock,
+    };
+    try {
+      if (editingId) {
+        const result = await sparepartApi.update(editingId, payload);
+        if (!result) {
+          toast.error("Gagal memperbarui sparepart.");
+          return;
+        }
+        toast.success("Sparepart berhasil diperbarui");
+      } else {
+        const result = await sparepartApi.create(payload);
+        if (!result) {
+          toast.error("Gagal menambahkan sparepart.");
+          return;
+        }
+        toast.success("Sparepart berhasil ditambahkan");
+      }
+      setModalOpen(false);
+      reset();
+      loadData();
+    } catch (error) {
+      toast.error("Terjadi kesalahan");
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    await sparepartApi.remove(id);
-    toast.success('Sparepart berhasil dihapus');
-    loadData();
+    try {
+      await sparepartApi.remove(id);
+      toast.success("Sparepart berhasil dihapus");
+      loadData();
+    } catch (error) {
+      toast.error("Gagal menghapus sparepart");
+    }
   };
 
   const filtered = useMemo(() => {
     if (!debouncedSearch) return spareparts;
     const q = debouncedSearch.toLowerCase();
-    return spareparts.filter(s => s.nama.toLowerCase().includes(q));
+    return spareparts.filter((s) => s.nama.toLowerCase().includes(q));
   }, [spareparts, debouncedSearch]);
 
   const columns = [
-    { key: 'nama', header: 'Nama Sparepart', render: (s: Sparepart) => <span className="font-medium text-foreground">{s.nama}</span> },
-    { key: 'harga', header: 'Harga', render: (s: Sparepart) => formatCurrency(s.harga) },
     {
-      key: 'stok', header: 'Stok', render: (s: Sparepart) => (
-        <Badge variant={s.stok <= 5 ? 'destructive' : s.stok <= 15 ? 'outline' : 'secondary'}>
-          {s.stok} unit
+      key: "nama",
+      header: "Nama Sparepart",
+      render: (s: Sparepart) => (
+        <span className="font-medium text-foreground">{s.nama}</span>
+      ),
+    },
+
+    {
+      key: "stock",
+      header: "Stock",
+      render: (s: Sparepart) => (
+        <Badge
+          variant={
+            s.stock <= 5
+              ? "destructive"
+              : s.stock <= 15
+                ? "outline"
+                : "secondary"
+          }
+        >
+          {s.stock} unit
         </Badge>
       ),
     },
@@ -101,15 +147,25 @@ export default function SparepartPage() {
             <Package className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-foreground">Data Sparepart</h1>
-            <p className="text-sm text-muted-foreground">{spareparts.length} sparepart tersedia</p>
+            <h1 className="text-xl font-semibold text-foreground">
+              Data Sparepart
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {spareparts.length} sparepart tersedia
+            </p>
           </div>
         </div>
-        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Tambah Sparepart</Button>
+        <Button onClick={openCreate}>
+          <Plus className="h-4 w-4 mr-2" /> Tambah Sparepart
+        </Button>
       </div>
 
       <div className="max-w-sm">
-        <SearchInput value={search} onChange={setSearch} placeholder="Cari nama sparepart..." />
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Cari nama sparepart..."
+        />
       </div>
 
       <DataTable
@@ -119,34 +175,70 @@ export default function SparepartPage() {
         emptyMessage="Belum ada sparepart"
         actions={(s) => (
           <div className="flex items-center gap-1 justify-end">
-            <Button variant="ghost" size="sm" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(s.id)}><Trash2 className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="sm" onClick={() => openEdit(s)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => handleDelete(s.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         )}
       />
 
-      <ReusableModal open={modalOpen} onClose={() => { setModalOpen(false); setEditingId(null); }} title={editingId ? 'Edit Sparepart' : 'Tambah Sparepart'}>
-        <form onSubmit={form.handleSubmit} className="space-y-4">
+      <ReusableModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingId(null);
+          reset();
+        }}
+        title={editingId ? "Edit Sparepart" : "Tambah Sparepart"}
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <Label>Nama Sparepart</Label>
-            <Input value={form.values.nama} onChange={(e) => form.handleChange('nama', e.target.value)} className={form.errors.nama ? 'border-destructive' : ''} />
-            {form.errors.nama && <p className="text-sm text-destructive mt-1">{form.errors.nama}</p>}
+            <Input
+              {...register("nama")}
+              className={errors.nama ? "border-destructive" : ""}
+            />
+            {errors.nama && (
+              <p className="text-sm text-destructive mt-1">
+                {errors.nama.message}
+              </p>
+            )}
           </div>
+
           <div>
-            <Label>Harga (Rp)</Label>
-            <Input type="number" value={form.values.harga || ''} onChange={(e) => form.handleChange('harga', Number(e.target.value))} className={form.errors.harga ? 'border-destructive' : ''} />
-            {form.errors.harga && <p className="text-sm text-destructive mt-1">{form.errors.harga}</p>}
-          </div>
-          <div>
-            <Label>Stok</Label>
-            <Input type="number" value={form.values.stok || ''} onChange={(e) => form.handleChange('stok', Number(e.target.value))} className={form.errors.stok ? 'border-destructive' : ''} />
-            {form.errors.stok && <p className="text-sm text-destructive mt-1">{form.errors.stok}</p>}
+            <Label>Stock</Label>
+            <Input
+              type="number"
+              {...register("stock", { valueAsNumber: true })}
+              className={errors.stock ? "border-destructive" : ""}
+            />
+            {errors.stock && (
+              <p className="text-sm text-destructive mt-1">
+                {errors.stock.message}
+              </p>
+            )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Batal</Button>
-            <Button type="submit" disabled={form.isSubmitting}>
-              {form.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {editingId ? 'Simpan' : 'Tambah'}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setModalOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {editingId ? "Simpan" : "Tambah"}
             </Button>
           </div>
         </form>

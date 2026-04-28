@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/features/auth/AuthContext";
-import { dashboardApi } from "@/services/api";
+import { useState, useEffect, useCallback, Key } from "react";
+import { customerApi } from "@/services/api";
 import { ServiceOrder, ServiceStatus } from "@/types";
 import { formatCurrency } from "@/utils/dummy-data";
 import { Badge } from "@/components/ui/badge";
@@ -15,33 +14,60 @@ import {
   CalendarDays,
   Smartphone,
   MessageSquare,
+  Users,
 } from "lucide-react";
 
 const statusConfig: Record<
   ServiceStatus,
   { label: string; className: string; icon: typeof Clock }
 > = {
-  pending: {
-    label: "Menunggu",
+  "proses transaksi": {
+    label: "Proses Transaksi",
+    className: "bg-info/15 text-info border-info/30",
+    icon: Clock,
+  },
+  deal: {
+    label: "Deal",
+    className: "bg-success/15 text-success border-success/30",
+    icon: CheckCircle2,
+  },
+  "menunggu part": {
+    label: "Menunggu Part",
     className: "bg-warning/15 text-warning border-warning/30",
     icon: AlertCircle,
   },
-  in_progress: {
-    label: "Dikerjakan",
+  diproses: {
+    label: "Diproses",
     className: "bg-primary/15 text-primary border-primary/30",
     icon: Clock,
   },
-  completed: {
+  ok: {
     label: "Selesai",
     className: "bg-success/15 text-success border-success/30",
     icon: CheckCircle2,
   },
+  "not good": {
+    label: "Tidak Jadi",
+    className: "bg-destructive/15 text-destructive border-destructive/30",
+    icon: AlertCircle,
+  },
+
+  diambil: {
+    label: "Diambil",
+    className: "bg-success/15 text-success border-success/30",
+    icon: CheckCircle2,
+  },
+  cancel: {
+    label: "Batal",
+    className: "bg-destructive/15 text-destructive border-destructive/30",
+    icon: AlertCircle,
+  },
 };
 
-function ServiceCard({ order }: { order: ServiceOrder }) {
-  const config = statusConfig[order.status];
+function ServiceCard({ order }: { order: ServiceOrder["customers"] }) {
+  const config =
+    statusConfig[order.status as ServiceStatus] || statusConfig["diproses"];
   const StatusIcon = config.icon;
-
   return (
     <div className="bg-card border rounded-xl p-5 hover:shadow-md transition-shadow animate-slide-up">
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -51,7 +77,7 @@ function ServiceCard({ order }: { order: ServiceOrder }) {
           </div>
           <div>
             <p className="font-semibold text-foreground text-sm">
-              {order.device}
+              {order.merk_hp}
             </p>
             <p className="text-xs text-muted-foreground">{order.id}</p>
           </div>
@@ -68,33 +94,19 @@ function ServiceCard({ order }: { order: ServiceOrder }) {
       <div className="space-y-2 text-sm">
         <div className="flex items-start gap-2 text-muted-foreground">
           <Wrench className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-          <span>{order.keluhan}</span>
+          <span>{order.kerusakan}</span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <User className="h-3.5 w-3.5 shrink-0" />
-          <span>{order.customerName}</span>
+          <span>{order.nama_customer}</span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <CalendarDays className="h-3.5 w-3.5 shrink-0" />
-          <span>Masuk: {order.tanggalMasuk}</span>
-          {order.tanggalSelesai && (
-            <span className="text-success">
-              • Selesai: {order.tanggalSelesai}
-            </span>
+          <span>Masuk: 11-02-26</span>
+          {order.tgl_keluar && (
+            <span className="text-success">• Selesai: {"11-02-26"}</span>
           )}
         </div>
-        {order.sparepartsUsed.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-1">
-            {order.sparepartsUsed.map((sp) => (
-              <span
-                key={sp}
-                className="text-xs bg-secondary px-2 py-0.5 rounded-md text-secondary-foreground"
-              >
-                {sp}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="mt-3 pt-3 border-t flex items-center justify-between">
@@ -103,7 +115,7 @@ function ServiceCard({ order }: { order: ServiceOrder }) {
           <span className="line-clamp-1">{order.catatan}</span>
         </div>
         <p className="font-semibold text-sm text-foreground">
-          {formatCurrency(order.estimasiBiaya)}
+          {formatCurrency(order.biaya)}
         </p>
       </div>
     </div>
@@ -111,32 +123,41 @@ function ServiceCard({ order }: { order: ServiceOrder }) {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user } = JSON.parse(localStorage.getItem("user"));
   const [tab, setTab] = useState("all");
 
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
-
+  // Define status grouping for tabs
+  const statusGroups: Record<string, ServiceStatus[]> = {
+    all: [],
+    diproses: ["proses transaksi", "deal", "menunggu part", "diproses"],
+    ok: ["ok", "diambil"],
+    "not good": ["not good", "cancel"],
+  };
   const loadOrders = useCallback(async () => {
-    const data = await dashboardApi.getServiceOrders();
-    setOrders(data);
-  }, []);
+    try {
+      const data = await customerApi.getByTechnician(user.name);
+      setOrders(data || []);
+    } catch (error) {
+      console.error("Error loading orders:", error);
+      setOrders([]);
+    }
+  }, [user.name]);
 
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+  // Flatten all customers from all orders
+  const allCustomers = orders.flatMap((order) => order.customers);
 
+  // Filter berdasarkan tab
   const filtered =
-    tab === "all" ? orders : orders.filter((o) => o.status === tab);
-
-  const totalCompleted = orders.filter((o) => o.status === "completed").length;
-  const totalInProgress = orders.filter(
-    (o) => o.status === "in_progress",
-  ).length;
-  const totalPending = orders.filter((o) => o.status === "pending").length;
-  const totalRevenue = orders
-    .filter((o) => o.status === "completed")
-    .reduce((sum, o) => sum + o.estimasiBiaya, 0);
-
+    tab === "all"
+      ? allCustomers
+      : allCustomers.filter((customer) =>
+          statusGroups[tab]?.includes(customer.status as ServiceStatus),
+        );
+  console.log("Filtered Customers:", filtered);
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Profile Header */}
@@ -155,9 +176,6 @@ export default function ProfilePage() {
                 <Mail className="h-3.5 w-3.5" />
                 {user?.email ?? "email@example.com"}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Teknisi • Bergabung sejak Januari 2024
-              </p>
             </div>
           </div>
         </div>
@@ -167,29 +185,36 @@ export default function ProfilePage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           {
-            label: "Selesai",
-            value: totalCompleted,
-            color: "text-success",
-            bg: "bg-success/10",
-            icon: CheckCircle2,
+            label: "Total Customer",
+            value: orders[0]?.total_customers || 0,
+            color: "bg-primary/10 text-primary",
+            bg: "bg-primary/10",
+            icon: Users,
           },
           {
-            label: "Dikerjakan",
-            value: totalInProgress,
+            label: "diproses",
+            value: orders[0]?.hp_diproses || 0,
             color: "text-primary",
             bg: "bg-primary/10",
             icon: Clock,
           },
           {
-            label: "Menunggu",
-            value: totalPending,
+            label: "Selesai",
+            value: orders[0]?.hp_selesai || 0,
+            color: "text-success",
+            bg: "bg-success/10",
+            icon: CheckCircle2,
+          },
+          {
+            label: "tidak jadi",
+            value: orders[0]?.hp_tidak_jadi || 0,
             color: "text-warning",
             bg: "bg-warning/10",
             icon: AlertCircle,
           },
           {
             label: "Pendapatan",
-            value: formatCurrency(totalRevenue),
+            value: formatCurrency(orders[0]?.total_fee || 0),
             color: "text-foreground",
             bg: "bg-accent",
             icon: Wrench,
@@ -223,14 +248,14 @@ export default function ProfilePage() {
               <TabsTrigger value="all" className="text-xs">
                 Semua
               </TabsTrigger>
-              <TabsTrigger value="in_progress" className="text-xs">
-                Dikerjakan
+              <TabsTrigger value="diproses" className="text-xs">
+                Diproses
               </TabsTrigger>
-              <TabsTrigger value="completed" className="text-xs">
+              <TabsTrigger value="ok" className="text-xs">
                 Selesai
               </TabsTrigger>
-              <TabsTrigger value="pending" className="text-xs">
-                Menunggu
+              <TabsTrigger value="not good" className="text-xs">
+                Tidak jadi
               </TabsTrigger>
             </TabsList>
           </div>
@@ -245,8 +270,8 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                {filtered.map((order) => (
-                  <ServiceCard key={order.id} order={order} />
+                {filtered.map((customer, index) => (
+                  <ServiceCard key={customer.id || index} order={customer} />
                 ))}
               </div>
             )}

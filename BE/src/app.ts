@@ -7,6 +7,7 @@ import customerRouter from "./modules/customers/customer_routes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { authLimiter, generalLimiter } from "./middlewares/rateLimiter.js";
 import sparePartRouter from "./modules/spareparts/sparePart_routes.js";
+import dashboardRouter from "./modules/dashboard/dashboard_routes.js";
 dotenv.config();
 
 const app = express();
@@ -30,6 +31,7 @@ app.get("/health", (req, res) => {
 // =====================
 
 app.use("/api/auth", authLimiter, authRouter);
+app.use("/api/dashboard", dashboardRouter);
 app.use("/api/customers", customerRouter);
 // app.use('/api/service-orders', serviceOrdersRouter);
 app.use("/api/spareparts", sparePartRouter);

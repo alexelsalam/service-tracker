@@ -14,7 +14,7 @@ export const createCustomerSchema = z.object({
   status: z
     .enum([
       "proses transaksi",
-      "pengecekan",
+      "deal",
       "menunggu part",
       "diproses",
       "ok",
@@ -22,7 +22,7 @@ export const createCustomerSchema = z.object({
       "diambil",
       "cancel",
     ])
-    .default("pengecekan"),
+    .default("proses transaksi"),
   tgl_masuk: z.coerce.date().optional(),
   tgl_keluar: z.coerce.date().optional(),
   catatan: z.string().optional(),

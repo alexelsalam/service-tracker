@@ -48,9 +48,11 @@ export const authApi = {
       console.log("Register response:", data);
       return data;
     } catch (error) {
-      // const message =
-      //   error instanceof Error ? error.message : "Pendaftaran gagal";
-      // return { success: false, message };
+      return {
+        success: false,
+        message: error.message || "Registration failed",
+        data: null,
+      };
     }
   },
 

@@ -19,32 +19,43 @@ export interface Customer {
 export interface Sparepart {
   id: string;
   nama: string;
-  harga: number;
-  stok: number;
+  stock: number;
 }
-export type UserRole = "admin" | "teknisi" | "user";
+export type UserRole = "admin" | "teknisi";
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
 }
-
-export type ServiceStatus = "pending" | "in_progress" | "completed";
-
+export type ServiceStatus =
+  | "proses transaksi"
+  | "deal"
+  | "menunggu part"
+  | "diproses"
+  | "ok"
+  | "not good"
+  | "diambil"
+  | "cancel";
 export interface ServiceOrder {
-  id: string;
-  customerId: string;
-  customerName: string;
-  device: string;
-  keluhan: string;
-  status: ServiceStatus;
-  estimasiBiaya: number;
-  sparepartsUsed: string[];
   teknisi: string;
-  tanggalMasuk: string;
-  tanggalSelesai: string | null;
-  catatan: string;
+  total_customers: number;
+  hp_selesai: number;
+  hp_diproses: number;
+  hp_tidak_jadi: number;
+  total_fee: number;
+  customers: {
+    id: string;
+    nama_customer: string;
+    merk_hp: string;
+    kerusakan: string;
+    biaya: number;
+    fee: number;
+    status: string;
+    tgl_masuk: Date;
+    tgl_keluar: Date;
+    catatan: string;
+  };
 }
 
 export type CustomerFormData = Omit<Customer, "id" | "createdAt">;

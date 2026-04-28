@@ -19,7 +19,7 @@ import "react-datepicker/dist/react-datepicker.css";
 
 const STATUS_OPTIONS = [
   "proses transaksi",
-  "pengecekan",
+  "deal",
   "menunggu part",
   "diproses",
   "ok",
@@ -38,7 +38,7 @@ const createCustomerSchema = z.object({
   kerusakan: z.string().min(1, "Kerusakan wajib diisi"),
   biaya: z.coerce.number().optional(),
   teknisi: z.string().min(1, "Teknisi wajib dipilih"),
-  status: z.enum(STATUS_OPTIONS).default("pengecekan"),
+  status: z.enum(STATUS_OPTIONS).default("proses transaksi"),
   tgl_masuk: z.date().optional(),
   tgl_keluar: z.date().optional(),
   catatan: z.string().optional(),
@@ -77,7 +77,7 @@ export default function CustomerPage() {
   } = useForm<CreateCustomerInput>({
     resolver: zodResolver(createCustomerSchema),
     defaultValues: {
-      status: "pengecekan",
+      status: "proses transaksi",
     },
   });
 
@@ -93,7 +93,7 @@ export default function CustomerPage() {
       kerusakan: "",
       biaya: undefined,
       teknisi: "",
-      status: "pengecekan",
+      status: "proses transaksi",
       tgl_masuk: undefined,
       tgl_keluar: undefined,
       catatan: "",
@@ -172,7 +172,11 @@ export default function CustomerPage() {
     };
     try {
       if (editingId) {
-        await customerApi.update(editingId, payload);
+        const result = await customerApi.update(editingId, payload);
+        if (!result) {
+          toast.error("Gagal memperbarui customer.");
+          return;
+        }
         toast.success("Customer berhasil diperbarui!");
       } else {
         const result = await customerApi.create(payload);

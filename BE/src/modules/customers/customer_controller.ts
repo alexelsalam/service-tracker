@@ -11,6 +11,14 @@ export const getAllCustomersController = catchAsync(async (req, res) => {
   const customers = await customerService.getAllCustomers();
   res.json({ success: true, data: customers });
 });
+export const getCustomersByTechnicianController = catchAsync(
+  async (req: Request, res: Response) => {
+    const data = await customerService.getCustomersByTechnician(
+      req.params.teknisi as string,
+    );
+    res.json({ success: true, data });
+  },
+);
 
 export const getCustomerByIdController = catchAsync(async (req, res) => {
   const customer = await customerService.getCustomerById(

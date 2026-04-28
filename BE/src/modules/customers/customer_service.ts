@@ -18,6 +18,26 @@ type Customer = {
   tgl_keluar: Date;
   catatan: string;
 };
+type CustomerByTechnician = {
+  teknisi: string;
+  total_customers: number;
+  hp_selesai: number;
+  hp_diproses: number;
+  hp_tidak_jadi: number;
+  total_fee: number;
+  customers: {
+    id: string;
+    nama_customer: string;
+    merk_hp: string;
+    kerusakan: string;
+    biaya: number;
+    fee: number;
+    status: string;
+    tgl_masuk: Date;
+    tgl_keluar: Date;
+    catatan: string;
+  };
+};
 // Helper function untuk format tanggal (ambil hanya YYYY-MM-DD)
 function formatDateOnly(date: Date | string | null): string | null {
   if (!date) return null;
@@ -37,7 +57,61 @@ export async function getAllCustomers() {
     tgl_keluar: formatDateOnly(c.tgl_keluar),
   }));
 }
+export async function getCustomersByTechnician(teknisi: string) {
+  return await sql<CustomerByTechnician[]>`
+       SELECT
+      teknisi,
+      COUNT(*)::int AS total_customers,
 
+      -- HP selesai
+      COUNT(*) FILTER (WHERE status IN ('ok', 'diambil'))::int AS hp_selesai,
+
+      -- HP diproses
+      COUNT(*) FILTER (WHERE status IN ('proses transaksi', 'deal', 'menunggu part', 'diproses'))::int AS hp_diproses,
+
+      -- HP tidak jadi
+      COUNT(*) FILTER (WHERE status IN ('not good', 'cancel'))::int AS hp_tidak_jadi,
+
+      -- Total fee semua customer teknisi ini
+      SUM(
+        CASE
+          WHEN biaya <= 85000  THEN 15000
+          WHEN biaya <= 150000 THEN 20000
+          WHEN biaya <= 250000 THEN 30000
+          WHEN biaya <= 350000 THEN 40000
+          ELSE 50000
+        END
+      )::int AS total_fee,
+
+      -- Detail customers
+      JSON_AGG(
+        JSON_BUILD_OBJECT(
+          'id', id,
+          'nama_customer', nama_customer,
+          'merk_hp', merk_hp,
+          'kerusakan', kerusakan,
+          'biaya', biaya,
+          'fee', CASE
+            WHEN biaya <= 85000  THEN 15000
+            WHEN biaya <= 150000 THEN 20000
+            WHEN biaya <= 250000 THEN 30000
+            WHEN biaya <= 350000 THEN 40000
+            ELSE 50000
+          END,
+          'status', status,
+          'tgl_masuk', tgl_masuk,
+          'tgl_keluar', tgl_keluar,
+          'catatan', catatan
+        )
+        ORDER BY tgl_masuk DESC
+      ) AS customers
+
+    FROM customers
+    WHERE teknisi = ${teknisi}
+    GROUP BY teknisi
+    ORDER BY teknisi ASC
+  `;
+}
 // Ambil customer by ID
 export async function getCustomerById(id: string) {
   const [customer] = await sql<Customer[]>`
@@ -50,7 +124,6 @@ export async function getCustomerById(id: string) {
 
 // Buat customer baru
 export async function createCustomer(input: CreateCustomerInput) {
-  console.log("Input createCustomer:", input);
   const [customer] = await sql<Customer[]>`
     INSERT INTO customers (kode_data,nama_konter,nama_customer,alamat,no_hp,merk_hp,kerusakan,biaya,teknisi,status,tgl_masuk,tgl_keluar,catatan)
     VALUES (${input.kode_data}, ${input.nama_konter}, ${input.nama_customer}, ${input.alamat ?? null}, ${input.no_hp}, ${input.merk_hp ?? null}, ${input.kerusakan ?? null}, ${input.biaya ?? null}, ${input.teknisi}, ${input.status}, ${input.tgl_masuk ?? null}, ${input.tgl_keluar ?? null}, ${input.catatan ?? null})

@@ -79,7 +79,7 @@ function ServiceCard({ order }: { order: ServiceOrder["customers"] }) {
             <p className="font-semibold text-foreground text-sm">
               {order.merk_hp}
             </p>
-            <p className="text-xs text-muted-foreground">{order.id}</p>
+            <p className="text-xs text-muted-foreground">{order.kode_data}</p>
           </div>
         </div>
         <Badge
@@ -126,7 +126,16 @@ export default function ProfilePage() {
   const { user } = JSON.parse(localStorage.getItem("user"));
   const [tab, setTab] = useState("all");
 
+  // Initialize with current month and year
+  const currentDate = new Date();
+  const currentMonth = String(currentDate.getMonth() + 1);
+  const currentYear = String(currentDate.getFullYear());
+
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   // Define status grouping for tabs
   const statusGroups: Record<string, ServiceStatus[]> = {
     all: [],
@@ -134,19 +143,24 @@ export default function ProfilePage() {
     ok: ["ok", "diambil"],
     "not good": ["not good", "cancel"],
   };
-  const loadOrders = useCallback(async () => {
+
+  const loadOrders = useCallback(async (bulan?: string, tahun?: string) => {
+    setIsLoading(true);
     try {
-      const data = await customerApi.getByTechnician(user.name);
+      const data = await customerApi.getByTechnician(bulan, tahun);
       setOrders(data || []);
     } catch (error) {
       console.error("Error loading orders:", error);
       setOrders([]);
+    } finally {
+      setIsLoading(false);
     }
-  }, [user.name]);
+  }, []);
 
+  // Load initial data and reload when month/year changes
   useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+    loadOrders(selectedMonth, selectedYear);
+  }, [loadOrders, selectedMonth, selectedYear]);
   // Flatten all customers from all orders
   const allCustomers = orders.flatMap((order) => order.customers);
 
@@ -258,10 +272,61 @@ export default function ProfilePage() {
                 Tidak jadi
               </TabsTrigger>
             </TabsList>
+
+            <div className="flex gap-2 flex-wrap justify-end">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="month-filter-profile" className="text-xs">
+                  Bulan
+                </label>
+                <select
+                  id="month-filter-profile"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                >
+                  <option value="">Semua Bulan</option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                    <option key={month} value={month}>
+                      {new Date(2024, month - 1).toLocaleString("id-ID", {
+                        month: "long",
+                      })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="year-filter-profile" className="text-xs">
+                  Tahun
+                </label>
+                <select
+                  id="year-filter-profile"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                >
+                  <option value="">Semua Tahun</option>
+                  {Array.from(
+                    { length: 10 },
+                    (_, i) => new Date().getFullYear() - i,
+                  ).map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           <TabsContent value={tab} className="mt-0">
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              <div className="bg-card border rounded-xl p-10 text-center">
+                <Clock className="h-10 w-10 text-muted-foreground mx-auto mb-2 animate-spin" />
+                <p className="text-sm text-muted-foreground">
+                  Memuat data service...
+                </p>
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="bg-card border rounded-xl p-10 text-center">
                 <Wrench className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">
@@ -271,7 +336,10 @@ export default function ProfilePage() {
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {filtered.map((customer, index) => (
-                  <ServiceCard key={customer.id || index} order={customer} />
+                  <ServiceCard
+                    key={customer.kode_data || index}
+                    order={customer}
+                  />
                 ))}
               </div>
             )}

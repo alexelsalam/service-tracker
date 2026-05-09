@@ -1,25 +1,47 @@
 import { Request, Response } from "express";
 import {
   createCustomerSchema,
+  customerQuerySchema,
   updateCustomerSchema,
 } from "./customer_schema.js";
 import * as customerService from "./customer_service.js";
 // customer.controller.ts
 import { catchAsync } from "../../utils/catchAsync.js";
+import { AppError } from "../../utils/AppError.js";
 
-export const getAllCustomersController = catchAsync(async (req, res) => {
-  const customers = await customerService.getAllCustomers();
-  res.json({ success: true, data: customers });
-});
-export const getCustomersByTechnicianController = catchAsync(
+export const getAllCustomersController = catchAsync(
   async (req: Request, res: Response) => {
-    const data = await customerService.getCustomersByTechnician(
-      req.params.teknisi as string,
-    );
-    res.json({ success: true, data });
+    const query = customerQuerySchema.parse(req.query);
+
+    const customers = await customerService.getAllCustomers(query);
+    res.json({ success: true, data: customers });
   },
 );
+// export const getCustomersByTechnicianController = catchAsync(
+//   async (req: Request, res: Response) => {
+//     const { bulan, tahun } = req.query;
+//     const bulanParam = typeof bulan === "string" ? bulan : undefined;
+//     const tahunParam = typeof tahun === "string" ? tahun : undefined;
+//     const data = await customerService.getCustomersByTechnician(
+//       req.params.teknisi as string,
+//       bulanParam,
+//       tahunParam,
+//     );
+//     res.json({ success: true, data });
+//   },
+// );
+export const getCustomersByTechnicianController = catchAsync(
+  async (req: Request, res: Response) => {
+    // Ambil nama teknisi dari token JWT yang login
+    const teknisi = req.user?.name;
+    if (!teknisi) throw AppError.unauthorized("Teknisi tidak ditemukan");
 
+    const query = customerQuerySchema.parse(req.query);
+    const data = await customerService.getCustomersByTechnician(teknisi, query);
+
+    res.json({ success: true, data: data[0] ?? [] });
+  },
+);
 export const getCustomerByIdController = catchAsync(async (req, res) => {
   const customer = await customerService.getCustomerById(
     req.params.id as string,

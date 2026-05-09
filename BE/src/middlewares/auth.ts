@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 type JwtPayload = {
   id: string;
   role: string;
+  name: string;
 };
 
 // Extend Request supaya bisa simpan data user

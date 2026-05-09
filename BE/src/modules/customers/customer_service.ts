@@ -1,6 +1,10 @@
 import sql from "../../config/db.js";
 import { AppError } from "../../utils/AppError.js";
-import { CreateCustomerInput, UpdateCustomerInput } from "./customer_schema.js";
+import {
+  CreateCustomerInput,
+  CustomerQuery,
+  UpdateCustomerInput,
+} from "./customer_schema.js";
 
 type Customer = {
   id: string;
@@ -26,7 +30,7 @@ type CustomerByTechnician = {
   hp_tidak_jadi: number;
   total_fee: number;
   customers: {
-    id: string;
+    kode_data: string;
     nama_customer: string;
     merk_hp: string;
     kerusakan: string;
@@ -45,36 +49,62 @@ function formatDateOnly(date: Date | string | null): string | null {
   return (dateObj.toISOString().split("T")[0] as string) || null; // Ambil hanya YYYY-MM-DD
 }
 
-// Ambil semua customer
-export async function getAllCustomers() {
-  const customers = await sql<Customer[]>`
-    SELECT * FROM customers ORDER BY created_at DESC
-  `;
-
-  return customers.map((c) => ({
+// Ambil semua customer dengan filter bulan dan tahun (opsional)
+export async function getAllCustomers(query: CustomerQuery) {
+  const { bulan, tahun } = query;
+  let result: Customer[] = [];
+  // Filter keduanya
+  if (bulan && tahun) {
+    result = await sql<Customer[]>`
+      SELECT * FROM customers
+      WHERE EXTRACT(MONTH FROM tgl_masuk) = ${bulan}
+      AND EXTRACT(YEAR FROM tgl_masuk) = ${tahun}
+      ORDER BY tgl_masuk DESC
+    `;
+  } else if (bulan) {
+    console.log("Filter by bulan:", bulan);
+    result = await sql<Customer[]>`
+      SELECT * FROM customers
+      WHERE EXTRACT(MONTH FROM tgl_masuk) = ${bulan}
+      ORDER BY tgl_masuk DESC
+    `;
+  } else if (tahun) {
+    result = await sql<Customer[]>`
+      SELECT * FROM customers
+      WHERE EXTRACT(YEAR FROM tgl_masuk) = ${tahun}
+      ORDER BY tgl_masuk DESC
+    `;
+  } else {
+    result = await sql<Customer[]>`
+      SELECT * FROM customers ORDER BY tgl_masuk DESC
+    `;
+  }
+  return result.map((c) => ({
     ...c,
     tgl_masuk: formatDateOnly(c.tgl_masuk),
     tgl_keluar: formatDateOnly(c.tgl_keluar),
   }));
 }
-export async function getCustomersByTechnician(teknisi: string) {
-  return await sql<CustomerByTechnician[]>`
-       SELECT
+
+export async function getCustomersByTechnician(
+  teknisi: string,
+  query: CustomerQuery,
+): Promise<CustomerByTechnician[]> {
+  let { bulan, tahun } = query;
+  console.log("Filter by bulan:", bulan, "tahun:", tahun);
+  bulan = typeof bulan === "string" && bulan === "" ? undefined : bulan;
+  tahun = typeof tahun === "string" && tahun === "" ? undefined : tahun;
+
+  const result = await sql<CustomerByTechnician[]>`
+    SELECT
       teknisi,
       COUNT(*)::int AS total_customers,
-
-      -- HP selesai
       COUNT(*) FILTER (WHERE status IN ('ok', 'diambil'))::int AS hp_selesai,
-
-      -- HP diproses
       COUNT(*) FILTER (WHERE status IN ('proses transaksi', 'deal', 'menunggu part', 'diproses'))::int AS hp_diproses,
-
-      -- HP tidak jadi
       COUNT(*) FILTER (WHERE status IN ('not good', 'cancel'))::int AS hp_tidak_jadi,
-
-      -- Total fee semua customer teknisi ini
       SUM(
         CASE
+          WHEN biaya IS NULL   THEN 0
           WHEN biaya <= 85000  THEN 15000
           WHEN biaya <= 150000 THEN 20000
           WHEN biaya <= 250000 THEN 30000
@@ -82,16 +112,15 @@ export async function getCustomersByTechnician(teknisi: string) {
           ELSE 50000
         END
       )::int AS total_fee,
-
-      -- Detail customers
       JSON_AGG(
         JSON_BUILD_OBJECT(
-          'id', id,
+          'kode_data', kode_data,
           'nama_customer', nama_customer,
           'merk_hp', merk_hp,
           'kerusakan', kerusakan,
           'biaya', biaya,
           'fee', CASE
+            WHEN biaya IS NULL   THEN 0
             WHEN biaya <= 85000  THEN 15000
             WHEN biaya <= 150000 THEN 20000
             WHEN biaya <= 250000 THEN 30000
@@ -105,12 +134,13 @@ export async function getCustomersByTechnician(teknisi: string) {
         )
         ORDER BY tgl_masuk DESC
       ) AS customers
-
     FROM customers
-    WHERE teknisi = ${teknisi}
+    WHERE LOWER(teknisi) = LOWER(${teknisi})
+    ${bulan ? sql`AND EXTRACT(MONTH FROM tgl_masuk) = ${bulan}` : sql``}
+    ${tahun ? sql`AND EXTRACT(YEAR FROM tgl_masuk) = ${tahun}` : sql``}
     GROUP BY teknisi
-    ORDER BY teknisi ASC
   `;
+  return result;
 }
 // Ambil customer by ID
 export async function getCustomerById(id: string) {

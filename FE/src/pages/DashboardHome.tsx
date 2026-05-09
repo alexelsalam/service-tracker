@@ -1,21 +1,30 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, Package, Smartphone, Wrench, Handshake } from "lucide-react";
+import {
+  Users,
+  Package,
+  Smartphone,
+  Wrench,
+  Handshake,
+  Pi,
+} from "lucide-react";
 import {
   dashboardApi,
   DashboardStatsResponse,
 } from "@/services/api/dashboardApi";
+import ChartsTotalService from "@/components/charts/ChartsTotalService";
+import BarChartProblemDevice from "@/components/charts/BarChartProblemDevice";
 
 export default function DashboardHome() {
   const [stats, setStats] = useState<DashboardStatsResponse | null>(null);
 
-  const loadStats = useCallback(async () => {
+  const cardStats = useCallback(async () => {
     const data = await dashboardApi.getStats();
     setStats(data);
   }, []);
 
   useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+    cardStats();
+  }, [cardStats]);
 
   const items = [
     {
@@ -78,15 +87,19 @@ export default function DashboardHome() {
           </div>
         ))}
       </div>
-
-      <div className="bg-card rounded-xl border p-6">
-        <h2 className="font-semibold text-foreground mb-2">
-          Aktivitas Terkini
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Belum ada aktivitas terbaru. Data akan muncul setelah ada transaksi
-          service.
-        </p>
+      <div className="flex gap-4">
+        <div className="bg-card rounded-xl border p-6 w-3xl h-110">
+          <h2 className="font-semibold text-foreground mb-2">
+            Aktivitas Terkini
+          </h2>
+          <ChartsTotalService />
+        </div>
+        <div className="bg-card rounded-xl border p-6 max-w-md h-110">
+          <h2 className="font-semibold text-foreground mb-2">
+            Data Problem HP Terbanyak
+          </h2>
+          <BarChartProblemDevice />
+        </div>
       </div>
     </div>
   );

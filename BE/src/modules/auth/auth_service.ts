@@ -54,7 +54,7 @@ export async function login(input: LoginInput) {
 
   // Generate JWT
   const token = jwt.sign(
-    { id: user.id, role: user.role },
+    { id: user.id, role: user.role, name: user.nama },
     process.env.JWT_SECRET!,
     { expiresIn: "7d" },
   );

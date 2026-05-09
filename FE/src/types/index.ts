@@ -45,7 +45,7 @@ export interface ServiceOrder {
   hp_tidak_jadi: number;
   total_fee: number;
   customers: {
-    id: string;
+    kode_data: string;
     nama_customer: string;
     merk_hp: string;
     kerusakan: string;

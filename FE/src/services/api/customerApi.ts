@@ -1,8 +1,5 @@
 import api from "@/lib/axios";
 import { Customer, CustomerFormData, ServiceOrder } from "@/types";
-// import { dummyCustomers, generateId } from "@/utils/dummy-data";
-import { error } from "console";
-import { S } from "vitest/dist/chunks/config.d.D2ROskhv.js";
 
 // In-memory fallback when no backend is available
 // let localCustomers = [...dummyCustomers];
@@ -17,9 +14,22 @@ interface ServiceOrderResponse {
   data: ServiceOrder | ServiceOrder[];
 }
 export const customerApi = {
-  async getAll(): Promise<Customer[]> {
+  async getAll(
+    bulan?: number | string,
+    tahun?: number | string,
+  ): Promise<Customer[]> {
     try {
-      const { data } = await api.get<CustResponse>("/customers");
+      const params = new URLSearchParams();
+      if (bulan && bulan !== "") {
+        params.append("bulan", String(bulan));
+      }
+      if (tahun && tahun !== "") {
+        params.append("tahun", String(tahun));
+      }
+      const query = params.toString();
+      const { data } = await api.get<CustResponse>(
+        `/customers${query ? `?${query}` : ""}`,
+      );
       return Array.isArray(data.data) ? data.data : [];
     } catch (error) {
       console.error("Error fetching customers:", error);
@@ -27,12 +37,24 @@ export const customerApi = {
     }
   },
 
-  async getByTechnician(teknisi: string): Promise<ServiceOrder[]> {
+  async getByTechnician(
+    bulan?: string | number,
+    tahun?: string | number,
+  ): Promise<ServiceOrder[]> {
     try {
+      const params = new URLSearchParams();
+      if (bulan && bulan !== "") {
+        params.append("bulan", String(bulan));
+      }
+      if (tahun && tahun !== "") {
+        params.append("tahun", String(tahun));
+      }
+      const query = params.toString();
       const { data } = await api.get<ServiceOrderResponse>(
-        `/customers/${teknisi}`,
+        `/customers/bytechnician${query ? `?${query}` : ""}`,
       );
-      return Array.isArray(data.data) ? data.data : [];
+      console.log("Fetched customers by technician:", Array.isArray(data.data));
+      return new Array(data.data).flat();
     } catch (error) {
       console.error("Error fetching customers by technician:", error);
       return [];

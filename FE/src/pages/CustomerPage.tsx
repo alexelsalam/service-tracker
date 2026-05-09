@@ -8,7 +8,6 @@ import { ReusableModal } from "@/components/ReusableModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Controller, useForm } from "react-hook-form";
@@ -16,6 +15,25 @@ import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+
+const KERUSAKAN_OPTIONS = [
+  "lcd",
+  "baterai",
+  "kamera ",
+  "speaker",
+  "charger",
+  "software",
+  "ic",
+  "stuck logo",
+  "restart",
+  "sinyal",
+  "mati",
+  "tombol",
+  "lupa sandi/pola",
+  "kena air",
+  "pasang komponen",
+  "masalah lainnya",
+] as const;
 
 const STATUS_OPTIONS = [
   "proses transaksi",
@@ -35,7 +53,7 @@ const createCustomerSchema = z.object({
   alamat: z.string().min(1, "Alamat wajib diisi"),
   no_hp: z.string().min(8, "Nomor HP tidak valid"),
   merk_hp: z.string().min(1, "Merk HP wajib diisi"),
-  kerusakan: z.string().min(1, "Kerusakan wajib diisi"),
+  kerusakan: z.enum(KERUSAKAN_OPTIONS).default("masalah lainnya"),
   biaya: z.coerce.number().optional(),
   teknisi: z.string().min(1, "Teknisi wajib dipilih"),
   status: z.enum(STATUS_OPTIONS).default("proses transaksi"),
@@ -52,21 +70,33 @@ export default function CustomerPage() {
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    String(new Date().getMonth() + 1),
+  );
+  const [selectedYear, setSelectedYear] = useState<string>(
+    String(new Date().getFullYear()),
+  );
   const debouncedSearch = useDebounce(search);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await customerApi.getAll();
-      setCustomers(data);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const loadData = useCallback(
+    async (bulan?: string | number, tahun?: string | number) => {
+      setLoading(true);
+      try {
+        const data = await customerApi.getAll(bulan, tahun);
+        setCustomers(data);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadData(
+      selectedMonth !== "" ? selectedMonth : undefined,
+      selectedYear !== "" ? selectedYear : undefined,
+    );
+  }, [selectedMonth, selectedYear, loadData]);
 
   const {
     register,
@@ -77,6 +107,7 @@ export default function CustomerPage() {
   } = useForm<CreateCustomerInput>({
     resolver: zodResolver(createCustomerSchema),
     defaultValues: {
+      kerusakan: "masalah lainnya",
       status: "proses transaksi",
     },
   });
@@ -90,7 +121,7 @@ export default function CustomerPage() {
       alamat: "",
       no_hp: "",
       merk_hp: "",
-      kerusakan: "",
+      kerusakan: "masalah lainnya",
       biaya: undefined,
       teknisi: "",
       status: "proses transaksi",
@@ -110,7 +141,7 @@ export default function CustomerPage() {
       alamat: c.alamat,
       no_hp: c.no_hp,
       merk_hp: c.merk_hp,
-      kerusakan: c.kerusakan,
+      kerusakan: c.kerusakan as (typeof KERUSAKAN_OPTIONS)[number],
       biaya: c.biaya,
       teknisi: c.teknisi,
       status: c.status as (typeof STATUS_OPTIONS)[number],
@@ -217,12 +248,57 @@ export default function CustomerPage() {
         </Button>
       </div>
 
-      <div className="max-w-sm">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Cari nama, device, atau no HP..."
-        />
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
+        <div className="max-w-sm w-full">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Cari nama, device, atau no HP..."
+          />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="month-filter" className="text-xs">
+              Bulan
+            </Label>
+            <select
+              id="month-filter"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+            >
+              <option value="">Semua Bulan</option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                <option key={month} value={month}>
+                  {new Date(2024, month - 1).toLocaleString("id-ID", {
+                    month: "long",
+                  })}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="year-filter" className="text-xs">
+              Tahun
+            </Label>
+            <select
+              id="year-filter"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+            >
+              <option value="">Semua Tahun</option>
+              {Array.from(
+                { length: 10 },
+                (_, i) => new Date().getFullYear() - i,
+              ).map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       <DataTable
@@ -265,7 +341,6 @@ export default function CustomerPage() {
               "alamat",
               "no_hp",
               "merk_hp",
-              "kerusakan",
               "biaya",
               "teknisi",
               "tgl_masuk",
@@ -312,6 +387,27 @@ export default function CustomerPage() {
           ))}
 
           {/* Status Select */}
+          <div>
+            <Label>Kerusakan</Label>
+            <select
+              {...register("kerusakan")}
+              className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${
+                errors.kerusakan ? "border-destructive" : "border-input"
+              }`}
+            >
+              {KERUSAKAN_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option.charAt(0).toUpperCase() + option.slice(1)}
+                </option>
+              ))}
+            </select>
+            {errors.kerusakan && (
+              <p className="text-sm text-destructive mt-1">
+                {errors.kerusakan?.message?.toString() ||
+                  "Field ini wajib diisi"}
+              </p>
+            )}
+          </div>
           <div>
             <Label>Status</Label>
             <select

@@ -50,17 +50,29 @@ export const customerApi = {
         params.append("tahun", String(tahun));
       }
       const query = params.toString();
+      console.log(query);
       const { data } = await api.get<ServiceOrderResponse>(
         `/customers/bytechnician${query ? `?${query}` : ""}`,
       );
-      console.log("Fetched customers by technician:", Array.isArray(data.data));
+      console.log("Fetched customers by technician:", data.data);
       return new Array(data.data).flat();
     } catch (error) {
       console.error("Error fetching customers by technician:", error);
       return [];
     }
   },
-
+  async getByTechnicianAll(): Promise<ServiceOrder[]> {
+    try {
+      const { data } = await api.get<ServiceOrderResponse>(
+        `/customers/bytechnician/all`,
+      );
+      console.log("Fetched customers by technician:", data.data);
+      return new Array(data.data).flat();
+    } catch (error) {
+      console.error("Error fetching customers by technician:", error);
+      return [];
+    }
+  },
   async create(payload: CustomerFormData): Promise<Customer> {
     try {
       const { data } = await api.post<CustResponse>("/customers", payload);

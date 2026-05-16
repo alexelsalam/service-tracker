@@ -7,11 +7,18 @@ import {
   updateCustomerController,
   deleteCustomerController,
   getCustomersByTechnicianController,
+  getCustomersByAllTechnicianController,
 } from "./customer_controller.js";
 
 const router = Router();
 
 router.get("/", authenticate, getAllCustomersController);
+router.get(
+  "/bytechnician/all",
+  authenticate,
+  authorizeAdmin,
+  getCustomersByAllTechnicianController,
+);
 router.get("/bytechnician", authenticate, getCustomersByTechnicianController);
 router.get("/:id", authenticate, getCustomerByIdController);
 router.post("/", authenticate, createCustomerController);

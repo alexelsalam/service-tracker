@@ -17,19 +17,13 @@ export const getAllCustomersController = catchAsync(
     res.json({ success: true, data: customers });
   },
 );
-// export const getCustomersByTechnicianController = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const { bulan, tahun } = req.query;
-//     const bulanParam = typeof bulan === "string" ? bulan : undefined;
-//     const tahunParam = typeof tahun === "string" ? tahun : undefined;
-//     const data = await customerService.getCustomersByTechnician(
-//       req.params.teknisi as string,
-//       bulanParam,
-//       tahunParam,
-//     );
-//     res.json({ success: true, data });
-//   },
-// );
+export const getCustomersByAllTechnicianController = catchAsync(
+  async (req: Request, res: Response) => {
+    const query = customerQuerySchema.parse(req.query);
+    const data = await customerService.getCustomersByAllTechnician(query);
+    res.json({ success: true, data });
+  },
+);
 export const getCustomersByTechnicianController = catchAsync(
   async (req: Request, res: Response) => {
     // Ambil nama teknisi dari token JWT yang login

@@ -31,7 +31,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // console.log("Loading user from localStorage...", user);
     try {
       const saved = localStorage.getItem("user");
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      // If saved is an object with {user: {...}, token, role}, extract user
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === "object" && parsed.user) {
+        return parsed.user;
+      }
+      // If saved is already a User object
+      return parsed;
     } catch {
       localStorage.removeItem("user"); // buang data yang rusak
       return null;

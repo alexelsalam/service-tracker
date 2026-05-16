@@ -141,7 +141,8 @@ export default function SparepartPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* header  & add sparepart*/}
+      <div className="flex  sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
             <Package className="h-5 w-5 text-primary" />
@@ -155,19 +156,22 @@ export default function SparepartPage() {
             </p>
           </div>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="h-4 w-4 mr-2" /> Tambah Sparepart
+        <Button className="h-10 w-25 mr-1 mt-1 md:w-50" onClick={openCreate}>
+          <Plus className="h-2 w-2 sm:h-4 sm:w-4 sm:mr-2" />
+          <div className="text-xs text-wrap">
+            <span>Tambah</span> <span>Sparepart</span>
+          </div>
         </Button>
       </div>
-
-      <div className="max-w-sm">
+      {/* search sparepart */}
+      <div className="p-2 w-2/3 sm:max-w-sm sm:w-full">
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder="Cari nama sparepart..."
         />
       </div>
-
+      {/* data table */}
       <DataTable
         columns={columns}
         data={filtered}

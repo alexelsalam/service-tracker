@@ -53,7 +53,7 @@ const BarChartProblemDevice = () => {
   };
 
   return (
-    <div className="p-5 rounded-lg w-full h-96">
+    <div className="sm:p-5 rounded-lg h-96 sm:w-full lg:w-96">
       <Chart options={options} series={series} type="bar" height={350} />
     </div>
   );

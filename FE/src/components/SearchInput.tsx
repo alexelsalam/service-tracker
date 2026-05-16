@@ -1,5 +1,5 @@
-import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 interface SearchInputProps {
   value: string;
@@ -7,7 +7,11 @@ interface SearchInputProps {
   placeholder?: string;
 }
 
-export function SearchInput({ value, onChange, placeholder = 'Cari...' }: SearchInputProps) {
+export function SearchInput({
+  value,
+  onChange,
+  placeholder = "Cari...",
+}: SearchInputProps) {
   return (
     <div className="relative">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -15,7 +19,7 @@ export function SearchInput({ value, onChange, placeholder = 'Cari...' }: Search
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="pl-10 bg-card"
+        className="pl-10 bg-card text-xs"
       />
     </div>
   );

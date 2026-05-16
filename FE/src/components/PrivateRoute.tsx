@@ -7,7 +7,6 @@ interface PrivateRouteProps {
 
 export function PrivateRoute({ children }: PrivateRouteProps) {
   const { isAuthenticated } = useAuth();
-
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   return <>{children}</>;

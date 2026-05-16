@@ -228,14 +228,15 @@ export default function CustomerPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 animate-fade-in bg-card ">
+      {/* header & add customer */}
+      <div className="flex sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
             <Users className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-foreground">
+            <h1 className="sm:text-xl font-semibold text-foreground">
               Data Customer
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -243,21 +244,24 @@ export default function CustomerPage() {
             </p>
           </div>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="h-4 w-4 mr-2" /> Tambah Customer
+        <Button className="h-10 w-25 mr-1 mt-1 md:w-50" onClick={openCreate}>
+          <Plus className="h-2 w-2 sm:h-4 sm:w-4 sm:mr-2" />
+          <div className="text-wrap text-xs md:text-base md:text-nowrap">
+            <span>Tambah</span> <span>Customer</span>
+          </div>
         </Button>
       </div>
-
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
-        <div className="max-w-sm w-full">
+      {/* search data & date comp */}
+      <div className=" sm:flex  sm:flex-row gap-4 items-start sm:items-end justify-between">
+        <div className="m-2 sm:max-w-sm sm:w-full ">
           <SearchInput
             value={search}
             onChange={setSearch}
             placeholder="Cari nama, device, atau no HP..."
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <div className="flex flex-col gap-1">
+        <div className="flex gap-2 flex-wrap ml-2 md:ml-0 md:mr-1">
+          <div className="flex flex-col gap-1 ">
             <Label htmlFor="month-filter" className="text-xs">
               Bulan
             </Label>
@@ -265,7 +269,7 @@ export default function CustomerPage() {
               id="month-filter"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+              className="flex h-10 sm:h-10 rounded-md border border-input bg-background p-1 sm:px-3 sm:py-2 text-xs sm:text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
             >
               <option value="">Semua Bulan</option>
               {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
@@ -285,7 +289,7 @@ export default function CustomerPage() {
               id="year-filter"
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
-              className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+              className="flex h-10 sm:h-10 rounded-md border border-input bg-background p-1 sm:px-3 sm:py-2 text-xs sm:text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
             >
               <option value="">Semua Tahun</option>
               {Array.from(
@@ -300,7 +304,7 @@ export default function CustomerPage() {
           </div>
         </div>
       </div>
-
+      {/* table cust */}
       <DataTable
         columns={columns}
         data={filtered}
@@ -322,7 +326,7 @@ export default function CustomerPage() {
           </div>
         )}
       />
-
+      {/* form input cust */}
       <ReusableModal
         open={modalOpen}
         onClose={() => {

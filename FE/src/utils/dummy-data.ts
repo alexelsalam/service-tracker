@@ -81,14 +81,6 @@ export const dummyServiceOrders: ServiceOrder[] = [
   },
 ];
 
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(amount);
-}
-
 export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }

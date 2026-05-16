@@ -33,7 +33,6 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       const result = await login(data.email, data.password);
-      console.log("lo", result);
       if (!result.success) {
         toast.error(
           result.message || "Login gagal. Pastikan email dan password benar.",

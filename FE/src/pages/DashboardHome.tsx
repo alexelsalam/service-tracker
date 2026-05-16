@@ -1,12 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  Users,
-  Package,
-  Smartphone,
-  Wrench,
-  Handshake,
-  Pi,
-} from "lucide-react";
+import { Users, Package, Smartphone, Wrench, Handshake } from "lucide-react";
 import {
   dashboardApi,
   DashboardStatsResponse,
@@ -62,14 +55,15 @@ export default function DashboardHome() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* header */}
       <div>
         <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
           Selamat datang di panel admin Service HP
         </p>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* date colom */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 w-90 sm:w-full">
         {items.map((s) => (
           <div
             key={s.label}
@@ -87,14 +81,15 @@ export default function DashboardHome() {
           </div>
         ))}
       </div>
-      <div className="flex gap-4">
-        <div className="bg-card rounded-xl border p-6 w-3xl h-110">
+      {/* charts */}
+      <div className="flex flex-col lg:flex-row  gap-4 ">
+        <div className=" rounded-xl border p-2 sm:p-6 lg:w-3xl h-110 bg-card w-90 sm:w-full">
           <h2 className="font-semibold text-foreground mb-2">
             Aktivitas Terkini
           </h2>
           <ChartsTotalService />
         </div>
-        <div className="bg-card rounded-xl border p-6 max-w-md h-110">
+        <div className="bg-card rounded-xl border p-2  sm:p-6  h-110 w-90 sm:w-full lg:w-auto">
           <h2 className="font-semibold text-foreground mb-2">
             Data Problem HP Terbanyak
           </h2>

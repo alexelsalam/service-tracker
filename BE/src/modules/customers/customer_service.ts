@@ -1,3 +1,4 @@
+import cluster from "node:cluster";
 import sql from "../../config/db.js";
 import { AppError } from "../../utils/AppError.js";
 import {
@@ -30,6 +31,7 @@ type CustomerByTechnician = {
   hp_tidak_jadi: number;
   total_fee: number;
   customers: {
+    id: string;
     kode_data: string;
     nama_customer: string;
     merk_hp: string;
@@ -85,15 +87,80 @@ export async function getAllCustomers(query: CustomerQuery) {
     tgl_keluar: formatDateOnly(c.tgl_keluar),
   }));
 }
+export async function getCustomersByAllTechnician(
+  query: CustomerQuery,
+): Promise<CustomerByTechnician[]> {
+  const { bulan, tahun } = query;
 
+  const result = await sql<CustomerByTechnician[]>`
+    WITH teknisi_list AS (
+      -- Ambil semua teknisi yang pernah terdaftar di tabel users
+      -- termasuk yang sudah keluar sekalipun
+      SELECT DISTINCT nama FROM users WHERE role = 'teknisi'
+
+      UNION
+
+      -- Ambil juga teknisi yang ada di data customers
+      -- jaga-jaga kalau teknisi sudah dihapus dari users tapi datanya masih ada
+      SELECT DISTINCT teknisi AS nama
+      FROM customers
+      WHERE teknisi IS NOT NULL
+    )
+    SELECT
+      t.nama AS teknisi,
+      COUNT(c.id)::int AS total_customers,
+      COUNT(c.id) FILTER (WHERE c.status IN ('ok', 'diambil'))::int AS hp_selesai,
+      COUNT(c.id) FILTER (WHERE c.status IN ('proses transaksi', 'deal', 'menunggu part', 'diproses'))::int AS hp_diproses,
+      COUNT(c.id) FILTER (WHERE c.status IN ('not good', 'cancel'))::int AS hp_tidak_jadi,
+      COALESCE(SUM(
+        CASE
+          WHEN c.biaya IS NULL   THEN 0
+          WHEN c.biaya <= 85000  THEN 15000
+          WHEN c.biaya <= 150000 THEN 20000
+          WHEN c.biaya <= 250000 THEN 30000
+          WHEN c.biaya <= 350000 THEN 40000
+          ELSE 50000
+        END
+      )::int, 0) AS total_fee,
+      COALESCE(
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'id', c.id,
+            'nama_customer', c.nama_customer,
+            'merk_hp', c.merk_hp,
+            'kerusakan', c.kerusakan,
+            'biaya', c.biaya,
+            'fee', CASE
+              WHEN c.biaya IS NULL   THEN 0
+              WHEN c.biaya <= 85000  THEN 15000
+              WHEN c.biaya <= 150000 THEN 20000
+              WHEN c.biaya <= 250000 THEN 30000
+              WHEN c.biaya <= 350000 THEN 40000
+              ELSE 50000
+            END,
+            'status', c.status,
+            'tgl_masuk', c.tgl_masuk,
+            'tgl_keluar', c.tgl_keluar,
+            'catatan', c.catatan
+          )
+          ORDER BY c.tgl_masuk DESC
+        ) FILTER (WHERE c.id IS NOT NULL),
+        '[]'
+      ) AS customers
+    FROM teknisi_list t
+    LEFT JOIN customers c ON LOWER(c.teknisi) = LOWER(t.nama)
+      ${bulan ? sql`AND EXTRACT(MONTH FROM c.tgl_masuk) = ${bulan}` : sql``}
+      ${tahun ? sql`AND EXTRACT(YEAR FROM c.tgl_masuk) = ${tahun}` : sql``}
+    GROUP BY t.nama
+    ORDER BY t.nama ASC
+  `;
+  return result;
+}
 export async function getCustomersByTechnician(
   teknisi: string,
   query: CustomerQuery,
 ): Promise<CustomerByTechnician[]> {
   let { bulan, tahun } = query;
-  console.log("Filter by bulan:", bulan, "tahun:", tahun);
-  bulan = typeof bulan === "string" && bulan === "" ? undefined : bulan;
-  tahun = typeof tahun === "string" && tahun === "" ? undefined : tahun;
 
   const result = await sql<CustomerByTechnician[]>`
     SELECT
@@ -114,6 +181,7 @@ export async function getCustomersByTechnician(
       )::int AS total_fee,
       JSON_AGG(
         JSON_BUILD_OBJECT(
+        'id',id,
           'kode_data', kode_data,
           'nama_customer', nama_customer,
           'merk_hp', merk_hp,

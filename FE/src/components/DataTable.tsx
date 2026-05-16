@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { Loader2, Inbox } from "lucide-react";
 
 interface Column<T> {
@@ -22,6 +22,21 @@ export function DataTable<T extends { id: string }>({
   emptyMessage = "Belum ada data",
   actions,
 }: DataTableProps<T>) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollRef.current) {
+        setIsScrolled(scrollRef.current.scrollLeft > 0);
+      }
+    };
+
+    const scrollElement = scrollRef.current;
+    scrollElement?.addEventListener("scroll", handleScroll);
+
+    return () => scrollElement?.removeEventListener("scroll", handleScroll);
+  }, []);
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -42,14 +57,28 @@ export function DataTable<T extends { id: string }>({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border bg-card">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            {columns.map((col) => (
+    <div
+      ref={scrollRef}
+      className="rounded-lg border bg-card hide-scrollbar max-w-screen flex-1  overflow-x-scroll"
+    >
+      <table className="w-full text-xs sm:text-sm table-auto ">
+        <thead className="">
+          <tr className={`border-b bg-muted`}>
+            {columns.map((col, index) => (
               <th
                 key={col.key}
-                className="px-4 py-3 text-left font-medium text-muted-foreground"
+                className={`
+                    px-4 py-3 text-left font-medium text-muted-foreground 
+                    ${
+                      index === 2
+                        ? `sticky left-0  z-10 bg-muted ${
+                            isScrolled
+                              ? "shadow-[2px_0_4px_rgba(0,0,0,0.1)]"
+                              : ""
+                          }`
+                        : ""
+                    }
+                  `}
               >
                 {col.header}
               </th>
@@ -68,8 +97,22 @@ export function DataTable<T extends { id: string }>({
               className={`border-b last:border-0 transition-colors hover:bg-muted/30 animate-fade-in`}
               style={{ animationDelay: `${i * 30}ms` }}
             >
-              {columns.map((col) => (
-                <td key={col.key} className="px-4 py-3">
+              {columns.map((col, index) => (
+                <td
+                  key={col.key}
+                  className={`
+                      px-4 py-3
+                      ${
+                        index === 2
+                          ? `sticky left-0 z-10 bg-card ${
+                              isScrolled
+                                ? "shadow-[2px_0_4px_rgba(0,0,0,0.1)]"
+                                : ""
+                            }`
+                          : ""
+                      }
+                    `}
+                >
                   {col.render ? col.render(item) : (item as unknown)[col.key]}
                 </td>
               ))}

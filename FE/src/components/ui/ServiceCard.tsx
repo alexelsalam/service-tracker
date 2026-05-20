@@ -1,9 +1,8 @@
 import { ServiceOrder, ServiceStatus } from "@/types";
-import { Badge } from "@/components/ui/badge";
+import Badge from "@/components/ui/badge";
 
 import {
   User,
-  Mail,
   Wrench,
   Clock,
   CheckCircle2,
@@ -11,7 +10,6 @@ import {
   CalendarDays,
   Smartphone,
   MessageSquare,
-  Users,
 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatCurrency";
 

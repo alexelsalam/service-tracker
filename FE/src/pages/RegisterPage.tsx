@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/features/auth/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,19 +7,8 @@ import { toast } from "sonner";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-const registerSchema = z
-  .object({
-    nama: z.string().min(2, "Nama minimal 2 karakter"),
-    email: z.string().email("Email tidak valid"),
-    password: z.string().min(6, "Password minimal 6 karakter"),
-    confirmPassword: z.string(),
-    role: z.enum(["admin", "teknisi"]),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Password tidak cocok",
-    path: ["confirmPassword"], // error muncul di field confirmPassword
-  });
-type RegisterForm = z.infer<typeof registerSchema>;
+import { useAuth } from "@/hooks/useAuth";
+import { RegisterForm, registerSchema } from "@/schema/register.schema";
 
 export default function RegisterPage() {
   const { register: authRegister } = useAuth();

@@ -1,19 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { Loader2, Inbox } from "lucide-react";
-
-interface Column<T> {
-  key: string;
-  header: string;
-  render?: (item: T) => ReactNode;
-}
-
-interface DataTableProps<T> {
-  columns: Column<T>[];
-  data: T[];
-  loading?: boolean;
-  emptyMessage?: string;
-  actions?: (item: T) => ReactNode;
-}
+import { DataTableProps } from "@/types";
 
 export function DataTable<T extends { id: string }>({
   columns,

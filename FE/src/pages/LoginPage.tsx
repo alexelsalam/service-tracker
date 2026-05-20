@@ -1,22 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/features/auth/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Smartphone, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email wajib diisi")
-    .email("Format email tidak valid"),
-  password: z.string().min(6, "Password minimal 6 karakter"),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
+import { useAuth } from "@/hooks/useAuth";
+import { LoginForm, loginSchema } from "@/schema/login.schema";
 
 export default function LoginPage() {
   const { login } = useAuth();

@@ -1,6 +1,5 @@
 import api from "@/lib/axios";
 import { Sparepart, SparepartFormData } from "@/types";
-import { generateId } from "@/utils/dummy-data";
 
 // In-memory fallback when no backend is available
 interface SpareResponse {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Customer, CustomerFormData } from "@/types";
+import { Customer } from "@/types";
 import { customerApi } from "@/services/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { DataTable } from "@/components/DataTable";
@@ -11,58 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Controller, useForm } from "react-hook-form";
-import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-
-const KERUSAKAN_OPTIONS = [
-  "lcd",
-  "baterai",
-  "kamera ",
-  "speaker",
-  "charger",
-  "software",
-  "ic",
-  "stuck logo",
-  "restart",
-  "sinyal",
-  "mati",
-  "tombol",
-  "lupa sandi/pola",
-  "kena air",
-  "pasang komponen",
-  "masalah lainnya",
-] as const;
-
-const STATUS_OPTIONS = [
-  "proses transaksi",
-  "deal",
-  "menunggu part",
-  "diproses",
-  "ok",
-  "not good",
-  "diambil",
-  "cancel",
-] as const;
-
-const createCustomerSchema = z.object({
-  kode_data: z.string().min(1, "Kode data wajib diisi"),
-  nama_konter: z.string().min(1, "Nama konter wajib diisi"),
-  nama_customer: z.string().min(1, "Nama customer wajib diisi"),
-  alamat: z.string().min(1, "Alamat wajib diisi"),
-  no_hp: z.string().min(8, "Nomor HP tidak valid"),
-  merk_hp: z.string().min(1, "Merk HP wajib diisi"),
-  kerusakan: z.enum(KERUSAKAN_OPTIONS).default("masalah lainnya"),
-  biaya: z.coerce.number().optional(),
-  teknisi: z.string().min(1, "Teknisi wajib dipilih"),
-  status: z.enum(STATUS_OPTIONS).default("proses transaksi"),
-  tgl_masuk: z.date().optional(),
-  tgl_keluar: z.date().optional(),
-  catatan: z.string().optional(),
-});
-
-type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
+import {
+  CreateCustomerInput,
+  createCustomerSchema,
+  KERUSAKAN_OPTIONS,
+  STATUS_OPTIONS,
+} from "@/schema/customer.schema";
 
 export default function CustomerPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);

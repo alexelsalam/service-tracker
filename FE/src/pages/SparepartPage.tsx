@@ -8,18 +8,15 @@ import { ReusableModal } from "@/components/ReusableModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import Badge from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2, Package } from "lucide-react";
 import { toast } from "sonner";
-import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-
-const createSparePartSchema = z.object({
-  nama: z.string().min(2, "Nama minimal 2 karakter"),
-  stock: z.number().int().min(0, "Stock tidak boleh negatif"),
-});
-type CreateSparePartInput = z.infer<typeof createSparePartSchema>;
+import {
+  CreateSparePartInput,
+  createSparePartSchema,
+} from "@/schema/sparepart.schema";
 
 export default function SparepartPage() {
   const [spareparts, setSpareparts] = useState<Sparepart[]>([]);

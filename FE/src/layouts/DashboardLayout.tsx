@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "@/features/auth/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   Smartphone,
@@ -12,6 +11,7 @@ import {
   X,
   UserCircle,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -104,7 +104,7 @@ export default function DashboardLayout() {
           </Button>
         </header>
 
-        <main className="flex-1">
+        <main className="flex-1 md:p-5">
           <Outlet />
         </main>
       </div>

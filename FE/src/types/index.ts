@@ -1,3 +1,14 @@
+import { ReactNode } from "react";
+
+export type SidebarContextTypes = {
+  state: "expanded" | "collapsed";
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  openMobile: boolean;
+  setOpenMobile: (open: boolean) => void;
+  isMobile: boolean;
+  toggleSidebar: () => void;
+};
 export interface Customer {
   id: string;
   kode_data: string;
@@ -58,6 +69,33 @@ export interface ServiceOrder {
     catatan: string;
   };
 }
+export interface AuthContextType {
+  user: User | null;
+  isAuthenticated: boolean;
+  login: (
+    email: string,
+    password: string,
+  ) => Promise<{ success: boolean; message: string }>;
+  register: (
+    nama: string,
+    role: string,
+    email: string,
+    password: string,
+  ) => Promise<{ success: boolean; message: string }>;
+  logout: () => void;
+}
+interface Column<T> {
+  key: string;
+  header: string;
+  render?: (item: T) => ReactNode;
+}
 
+export interface DataTableProps<T> {
+  columns: Column<T>[];
+  data: T[];
+  loading?: boolean;
+  emptyMessage?: string;
+  actions?: (item: T) => ReactNode;
+}
 export type CustomerFormData = Omit<Customer, "id" | "createdAt">;
 export type SparepartFormData = Omit<Sparepart, "id">;

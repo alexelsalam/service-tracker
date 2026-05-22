@@ -22,7 +22,7 @@ app.use(generalLimiter);
 // =====================
 // Health Check
 // =====================
-app.get("/health", (req, res) => {
+app.get("/", (req, res) => {
   res.json({ status: "ok", message: "Server is running" });
 });
 
@@ -52,8 +52,9 @@ app.use(errorHandler);
 // =====================
 // Start Server
 // =====================
-app.get("/", (req, res) => {
-  res.send("API berjalan");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
 export default app;

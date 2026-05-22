@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import * as helmet from "helmet";
 import dotenv from "dotenv";
 import authRouter from "./modules/auth/auth_routes.js";
 import customerRouter from "./modules/customers/customer_routes.js";
@@ -15,7 +14,14 @@ const app = express();
 // =====================
 // Middleware Global
 // =====================
-app.use(helmet.default()); // security headers
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=()");
+  next();
+});
 app.use(cors()); // allow cross-origin
 app.use(express.json()); // parse JSON body
 app.use(generalLimiter);

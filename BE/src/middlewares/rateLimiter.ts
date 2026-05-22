@@ -1,9 +1,10 @@
 import rateLimit from "express-rate-limit";
 
+const rateLimitFn = (rateLimit as any).default ?? rateLimit;
 // =====================
 // General — semua endpoint
 // =====================
-export const generalLimiter = rateLimit({
+export const generalLimiter = rateLimitFn({
   windowMs: 15 * 60 * 1000, // 15 menit
   max: 100, // max 100 request per 15 menit
   standardHeaders: true,
@@ -17,7 +18,7 @@ export const generalLimiter = rateLimit({
 // =====================
 // Auth — ketat untuk login & register
 // =====================
-export const authLimiter = rateLimit({
+export const authLimiter = rateLimitFn({
   windowMs: 15 * 60 * 1000, // 15 menit
   max: 10, // max 10 request per 15 menit
   standardHeaders: true,

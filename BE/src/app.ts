@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import helmet from "helmet";
+import * as helmet from "helmet";
 import dotenv from "dotenv";
 import authRouter from "./modules/auth/auth_routes.js";
 import customerRouter from "./modules/customers/customer_routes.js";
@@ -15,7 +15,7 @@ const app = express();
 // =====================
 // Middleware Global
 // =====================
-app.use(helmet()); // security headers
+app.use(helmet.default()); // security headers
 app.use(cors()); // allow cross-origin
 app.use(express.json()); // parse JSON body
 app.use(generalLimiter);

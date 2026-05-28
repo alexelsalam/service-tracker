@@ -56,44 +56,51 @@ export default function DashboardHome() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* header */}
-      <div>
+      <div className="ml-6.5">
         <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
           Selamat datang di panel admin Service HP
         </p>
       </div>
       {/* date colom */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 w-90 sm:w-full">
-        {items.map((s) => (
-          <div
-            key={s.label}
-            className="bg-card rounded-xl border p-5 animate-slide-up"
-          >
-            <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-lg ${s.color}`}>
-                <s.icon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{s.value}</p>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
+      <div className="flex justify-center items-center gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 w-90 sm:w-full">
+          {items.map((s) => (
+            <div
+              key={s.label}
+              className="bg-card rounded-xl border p-5 animate-slide-up"
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-lg ${s.color}`}>
+                  <s.icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {s.value}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-      {/* charts */}
-      <div className="flex flex-col lg:flex-row  gap-4 ">
-        <div className=" rounded-xl border p-2 sm:p-6 lg:w-3xl h-110 bg-card w-90 sm:w-full">
-          <h2 className="font-semibold text-foreground mb-2">
-            Aktivitas Terkini
-          </h2>
-          <ChartsTotalService />
+          ))}
         </div>
-        <div className="bg-card rounded-xl border p-2  sm:p-6  h-110 w-90 sm:w-full lg:w-auto">
-          <h2 className="font-semibold text-foreground mb-2">
-            Data Problem HP Terbanyak
-          </h2>
-          <BarChartProblemDevice />
+      </div>
+
+      {/* charts */}
+      <div className="flex justify-center items-center gap-2">
+        <div className="flex flex-col lg:flex-row  gap-4 ">
+          <div className=" rounded-xl border p-2 sm:p-6 lg:w-3xl h-110 bg-card w-90 sm:w-full">
+            <h2 className="font-semibold text-foreground mb-2">
+              Aktivitas Terkini
+            </h2>
+            <ChartsTotalService />
+          </div>
+          <div className="bg-card rounded-xl border p-2  sm:p-6  h-110 w-90 sm:w-full lg:w-auto">
+            <h2 className="font-semibold text-foreground mb-2">
+              Data Problem HP Terbanyak
+            </h2>
+            <BarChartProblemDevice />
+          </div>
         </div>
       </div>
     </div>

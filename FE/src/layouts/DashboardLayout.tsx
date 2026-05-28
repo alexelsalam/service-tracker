@@ -104,7 +104,7 @@ export default function DashboardLayout() {
           </Button>
         </header>
 
-        <main className="flex-1 md:p-5">
+        <main className="flex-1">
           <Outlet />
         </main>
       </div>

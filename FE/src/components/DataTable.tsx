@@ -71,7 +71,7 @@ export function DataTable<T extends { id: string }>({
               </th>
             ))}
             {actions && (
-              <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+              <th className=" text-center font-medium text-muted-foreground">
                 Aksi
               </th>
             )}

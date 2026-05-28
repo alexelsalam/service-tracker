@@ -8,7 +8,7 @@ import { ReusableModal } from "@/components/ReusableModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2, Loader2, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Users, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +19,7 @@ import {
   KERUSAKAN_OPTIONS,
   STATUS_OPTIONS,
 } from "@/schema/customer.schema";
+import { useExportExcel } from "@/hooks/useExportExcel";
 
 export default function CustomerPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -33,7 +34,7 @@ export default function CustomerPage() {
     String(new Date().getFullYear()),
   );
   const debouncedSearch = useDebounce(search);
-
+  const { exportToExcel } = useExportExcel<Customer>();
   const loadData = useCallback(
     async (bulan?: string | number, tahun?: string | number) => {
       setLoading(true);
@@ -182,7 +183,14 @@ export default function CustomerPage() {
       loadData();
     }
   };
-
+  function handleExport() {
+    exportToExcel({
+      data: customers, // data customers yang sudah di-fetch
+      columns: columns, // columns yang sama dengan tabel
+      filename: `customers-${new Date().toISOString().slice(0, 7)}`,
+      sheetName: "Data Customers",
+    });
+  }
   return (
     <div className="space-y-6 animate-fade-in bg-card ">
       {/* header & add customer */}
@@ -208,8 +216,8 @@ export default function CustomerPage() {
         </Button>
       </div>
       {/* search data & date comp */}
-      <div className=" sm:flex  sm:flex-row gap-4 items-start sm:items-end justify-between">
-        <div className="m-2 sm:max-w-sm sm:w-full ">
+      <div className=" sm:flex  sm:flex-row  items-start sm:items-end justify-between">
+        <div className="mt-5 flex items-center gap-2 w-full sm:w-auto">
           <SearchInput
             value={search}
             onChange={setSearch}
@@ -258,6 +266,13 @@ export default function CustomerPage() {
               ))}
             </select>
           </div>
+          <button
+            onClick={handleExport}
+            className="flex items-center h-10 mt-5 gap-2 px-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            Export Excel
+          </button>
         </div>
       </div>
       {/* table cust */}
